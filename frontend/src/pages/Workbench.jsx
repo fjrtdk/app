@@ -4,17 +4,21 @@ import { useAuth } from "@/context/AuthContext";
 import {
   listPatterns,
   listPrompts,
-  optimizePrompt,
   forkPrompt,
   deletePrompt,
   createPrompt,
   updatePrompt,
   suggest as apiSuggest,
+  streamOptimize,
+  sharePrompt,
+  unsharePrompt,
+  listGroups,
 } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import Toolbar from "@/components/Toolbar";
 import EditorPane from "@/components/EditorPane";
 import OutputPane from "@/components/OutputPane";
+import MetaBar from "@/components/MetaBar";
 import { toast, Toaster } from "sonner";
 
 export default function Workbench() {
@@ -23,64 +27,101 @@ export default function Workbench() {
 
   const [patterns, setPatterns] = useState([]);
   const [prompts, setPrompts] = useState([]);
+  const [groupOptions, setGroupOptions] = useState([]);
+
   const [activeId, setActiveId] = useState(null);
+  const [title, setTitle] = useState("");
   const [rawInput, setRawInput] = useState("");
   const [output, setOutput] = useState("");
+  const [tags, setTags] = useState([]);
+  const [group, setGroup] = useState(null);
   const [selectedPattern, setSelectedPattern] = useState("improve_prompt");
+  const [shareToken, setShareToken] = useState(null);
+
   const [optimizing, setOptimizing] = useState(false);
   const [searchQ, setSearchQ] = useState("");
+  const [tagFilter, setTagFilter] = useState(null);
   const [suggestion, setSuggestion] = useState({ pattern: null, tags: [] });
   const [latency, setLatency] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [dirty, setDirty] = useState(false);
 
   const autosaveRef = useRef(null);
   const suggestRef = useRef(null);
+  const cancelStreamRef = useRef(null);
 
   // Redirect if unauthenticated
   useEffect(() => {
     if (!loading && !user) navigate("/login", { replace: true });
   }, [loading, user, navigate]);
 
-  // Load patterns + prompts
-  const refreshPrompts = useCallback(async (q = "") => {
+  // Load workspace data
+  const refreshPrompts = useCallback(async () => {
     try {
-      const list = await listPrompts(q ? { q } : {});
+      const params = {};
+      if (searchQ) params.q = searchQ;
+      if (tagFilter) params.tag = tagFilter;
+      const list = await listPrompts(params);
       setPrompts(list);
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
+  }, [searchQ, tagFilter]);
+
+  const refreshGroups = useCallback(async () => {
+    try {
+      const g = await listGroups();
+      setGroupOptions(g);
+    } catch (_) {}
   }, []);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [pats, ps] = await Promise.all([listPatterns(), listPrompts()]);
+        const [pats, ps, gs] = await Promise.all([
+          listPatterns(),
+          listPrompts(),
+          listGroups(),
+        ]);
         setPatterns(pats);
         setPrompts(ps);
-      } catch (e) {
+        setGroupOptions(gs);
+      } catch (_) {
         toast.error("Failed to load workspace");
       }
     })();
   }, [user]);
 
-  // Load active prompt content
+  useEffect(() => {
+    if (user) refreshPrompts();
+  }, [searchQ, tagFilter, user, refreshPrompts]);
+
+  // Select / new helpers
   const handleSelect = (p) => {
     setActiveId(p.id);
+    setTitle(p.title || "");
     setRawInput(p.raw_input || "");
     setOutput(p.optimized_output || "");
     setSelectedPattern(p.selected_pattern || "improve_prompt");
+    setTags(p.tags || []);
+    setGroup(p.group || null);
+    setShareToken(p.share_token || null);
     setDirty(false);
     setLatency(null);
+    setUsage(null);
   };
 
   const handleNew = () => {
     setActiveId(null);
+    setTitle("");
     setRawInput("");
     setOutput("");
     setSelectedPattern("improve_prompt");
+    setTags([]);
+    setGroup(null);
+    setShareToken(null);
     setDirty(false);
     setLatency(null);
+    setUsage(null);
   };
 
   // Live suggest (heuristic, debounced)
@@ -94,14 +135,12 @@ export default function Workbench() {
       try {
         const s = await apiSuggest(rawInput, false);
         setSuggestion({ pattern: s.suggested_pattern, tags: s.suggested_tags });
-      } catch (_) {
-        // ignore
-      }
+      } catch (_) {}
     }, 600);
     return () => clearTimeout(suggestRef.current);
   }, [rawInput]);
 
-  // Autosave (debounced) — only if there's content
+  // Autosave
   useEffect(() => {
     if (!dirty) return;
     if (autosaveRef.current) clearTimeout(autosaveRef.current);
@@ -109,51 +148,114 @@ export default function Workbench() {
       try {
         if (activeId) {
           await updatePrompt(activeId, {
+            title: title || undefined,
             raw_input: rawInput,
             optimized_output: output,
             selected_pattern: selectedPattern,
+            tags,
+            group,
           });
         } else if (rawInput.trim()) {
           const created = await createPrompt({
+            title: title || undefined,
             raw_input: rawInput,
             optimized_output: output,
             selected_pattern: selectedPattern,
+            tags,
+            group,
           });
           setActiveId(created.id);
+          if (!title) setTitle(created.title);
         }
         setDirty(false);
-        refreshPrompts(searchQ);
+        refreshPrompts();
+        refreshGroups();
       } catch (_) {}
-    }, 1200);
+    }, 1000);
     return () => clearTimeout(autosaveRef.current);
-  }, [rawInput, output, selectedPattern, dirty, activeId, refreshPrompts, searchQ]);
+  }, [
+    rawInput,
+    output,
+    selectedPattern,
+    tags,
+    group,
+    title,
+    dirty,
+    activeId,
+    refreshPrompts,
+    refreshGroups,
+  ]);
 
-  const handleOptimize = async () => {
+  // ---- Optimize via streaming SSE ----
+  const handleOptimize = () => {
     if (!rawInput.trim()) {
       toast.error("Add some notes first");
       return;
     }
     setOptimizing(true);
     setOutput("");
-    try {
-      const res = await optimizePrompt({
+    setUsage(null);
+    setLatency(null);
+
+    const startedAt = Date.now();
+    let fullOutput = "";
+    let resolvedPromptId = activeId;
+
+    const cancel = streamOptimize(
+      {
         raw_input: rawInput,
         pattern_slug: selectedPattern,
         prompt_id: activeId,
         save: true,
-      });
-      setOutput(res.optimized_output);
-      setLatency(res.latency_ms);
-      if (!activeId && res.prompt_id) setActiveId(res.prompt_id);
-      setDirty(false);
-      refreshPrompts(searchQ);
-      toast.success(`Optimized in ${(res.latency_ms / 1000).toFixed(1)}s`);
-    } catch (e) {
-      const msg = e?.response?.data?.detail || e.message;
-      toast.error(`Optimization failed: ${msg}`);
-    } finally {
-      setOptimizing(false);
+      },
+      (evt) => {
+        if (evt.error) {
+          toast.error(`Optimization failed: ${evt.error}`);
+          setOptimizing(false);
+          return;
+        }
+        if (evt.delta) {
+          fullOutput += evt.delta;
+          setOutput(fullOutput);
+        }
+        if (evt.usage) {
+          setUsage(evt.usage);
+        }
+        if (evt.done) {
+          setLatency(evt.latency_ms || Date.now() - startedAt);
+          if (evt.prompt_id && !activeId) {
+            resolvedPromptId = evt.prompt_id;
+            setActiveId(evt.prompt_id);
+          }
+          setOptimizing(false);
+          setDirty(false);
+          refreshPrompts();
+          // sync title from server-assigned title for new prompts
+          (async () => {
+            if (!activeId && resolvedPromptId) {
+              try {
+                const list = await listPrompts();
+                const p = list.find((x) => x.id === resolvedPromptId);
+                if (p && !title) setTitle(p.title);
+              } catch (_) {}
+            }
+          })();
+          toast.success(
+            `Optimized in ${((evt.latency_ms || Date.now() - startedAt) / 1000).toFixed(1)}s`
+          );
+        }
+      }
+    );
+    cancelStreamRef.current = cancel;
+  };
+
+  const handleCancel = () => {
+    if (cancelStreamRef.current) {
+      cancelStreamRef.current();
+      cancelStreamRef.current = null;
     }
+    setOptimizing(false);
+    toast("Cancelled");
   };
 
   const handleFork = async () => {
@@ -163,10 +265,10 @@ export default function Workbench() {
     }
     try {
       const f = await forkPrompt(activeId);
-      await refreshPrompts(searchQ);
+      await refreshPrompts();
       handleSelect(f);
       toast.success("Forked");
-    } catch (e) {
+    } catch (_) {
       toast.error("Fork failed");
     }
   };
@@ -188,20 +290,28 @@ export default function Workbench() {
     try {
       if (activeId) {
         await updatePrompt(activeId, {
+          title: title || undefined,
           raw_input: rawInput,
           optimized_output: output,
           selected_pattern: selectedPattern,
+          tags,
+          group,
         });
       } else {
         const created = await createPrompt({
+          title: title || undefined,
           raw_input: rawInput,
           optimized_output: output,
           selected_pattern: selectedPattern,
+          tags,
+          group,
         });
         setActiveId(created.id);
+        setTitle(created.title);
       }
       setDirty(false);
-      refreshPrompts(searchQ);
+      refreshPrompts();
+      refreshGroups();
       toast.success("Saved");
     } catch (_) {
       toast.error("Save failed");
@@ -212,34 +322,150 @@ export default function Workbench() {
     try {
       await deletePrompt(id);
       if (id === activeId) handleNew();
-      refreshPrompts(searchQ);
+      refreshPrompts();
       toast.success("Deleted");
     } catch (_) {
       toast.error("Delete failed");
     }
   };
 
-  const handleSearchChange = async (val) => {
-    setSearchQ(val);
-    refreshPrompts(val);
+  // ---- Share ----
+  const handleShare = async () => {
+    if (!activeId) {
+      toast.error("Save first to share");
+      return;
+    }
+    try {
+      const r = await sharePrompt(activeId);
+      setShareToken(r.share_token);
+      const url = window.location.origin + r.share_url_path;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Public link copied");
+      } catch (_) {
+        toast.success("Public link created");
+      }
+      refreshPrompts();
+    } catch (_) {
+      toast.error("Share failed");
+    }
   };
 
-  // Keyboard: Cmd/Ctrl+Enter = optimize, Cmd/Ctrl+S = save
+  const handleUnshare = async () => {
+    if (!activeId) return;
+    try {
+      await unsharePrompt(activeId);
+      setShareToken(null);
+      toast.success("Unshared");
+      refreshPrompts();
+    } catch (_) {
+      toast.error("Unshare failed");
+    }
+  };
+
+  const shareUrl = useMemo(
+    () => (shareToken ? `${window.location.origin}/share/${shareToken}` : null),
+    [shareToken]
+  );
+
+  // ---- Export ----
+  const buildMarkdown = useCallback(() => {
+    const ts = new Date().toISOString().slice(0, 19).replace("T", " ");
+    return `# ${title || "Untitled prompt"}
+
+> Pattern: \`${selectedPattern}\` · Generated via Nvidia NIM (meta/llama-3.3-70b-instruct) · ${ts}
+${tags.length ? `> Tags: ${tags.map((t) => `\`#${t}\``).join(", ")}\n` : ""}
+## Raw input
+
+\`\`\`
+${rawInput}
+\`\`\`
+
+## Optimized output
+
+${output}
+`;
+  }, [title, selectedPattern, tags, rawInput, output]);
+
+  const handleExportMarkdown = async () => {
+    if (!output) {
+      toast.error("Nothing to export");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(buildMarkdown());
+      toast.success("Markdown copied");
+    } catch (_) {
+      toast.error("Copy failed");
+    }
+  };
+
+  const handleDownloadMarkdown = () => {
+    if (!output) {
+      toast.error("Nothing to export");
+      return;
+    }
+    const md = buildMarkdown();
+    const blob = new Blob([md], { type: "text/markdown" });
+    const a = document.createElement("a");
+    const fname = (title || "prompt")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 60);
+    a.href = URL.createObjectURL(blob);
+    a.download = `${fname || "prompt"}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    toast.success("Downloaded");
+  };
+
+  const handleExportJson = async () => {
+    if (!output) {
+      toast.error("Nothing to export");
+      return;
+    }
+    const obj = {
+      title: title || "Untitled",
+      pattern: selectedPattern,
+      tags,
+      group,
+      raw_input: rawInput,
+      optimized_output: output,
+      model: "meta/llama-3.3-70b-instruct",
+      provider: "nvidia_nim",
+      exported_at: new Date().toISOString(),
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(obj, null, 2));
+      toast.success("JSON copied");
+    } catch (_) {
+      toast.error("Copy failed");
+    }
+  };
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
       const meta = e.metaKey || e.ctrlKey;
       if (meta && e.key === "Enter") {
         e.preventDefault();
-        handleOptimize();
+        if (optimizing) handleCancel();
+        else handleOptimize();
       } else if (meta && e.key.toLowerCase() === "s") {
         e.preventDefault();
         handleSave();
+      } else if (e.key === "Escape" && optimizing) {
+        e.preventDefault();
+        handleCancel();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawInput, output, selectedPattern, activeId]);
+  }, [rawInput, output, selectedPattern, activeId, tags, group, title, optimizing]);
 
   const activePattern = useMemo(
     () => patterns.find((p) => p.slug === selectedPattern),
@@ -255,7 +481,10 @@ export default function Workbench() {
   }
 
   return (
-    <div data-testid="workbench" className="h-screen w-screen flex bg-[#050505] text-white overflow-hidden">
+    <div
+      data-testid="workbench"
+      className="h-screen w-screen flex bg-[#050505] text-white overflow-hidden"
+    >
       <Sidebar
         user={user}
         prompts={prompts}
@@ -266,7 +495,9 @@ export default function Workbench() {
         onDelete={handleDelete}
         onLogout={logout}
         searchQ={searchQ}
-        onSearchChange={handleSearchChange}
+        onSearchChange={setSearchQ}
+        activeTagFilter={tagFilter}
+        onTagFilterChange={setTagFilter}
       />
 
       <div className="flex-1 flex flex-col h-full min-w-0">
@@ -278,12 +509,40 @@ export default function Workbench() {
             setDirty(true);
           }}
           onOptimize={handleOptimize}
+          onCancel={handleCancel}
           onCopy={handleCopy}
           onSave={handleSave}
           onFork={handleFork}
+          onShare={handleShare}
+          onUnshare={handleUnshare}
+          onExportMarkdown={handleExportMarkdown}
+          onExportJson={handleExportJson}
+          onDownloadMarkdown={handleDownloadMarkdown}
           optimizing={optimizing}
           activePattern={activePattern}
           latency={latency}
+          usage={usage}
+          shareUrl={shareUrl}
+          hasActivePrompt={!!activeId || !!rawInput.trim()}
+        />
+
+        <MetaBar
+          title={title}
+          onTitleChange={(v) => {
+            setTitle(v);
+            setDirty(true);
+          }}
+          tags={tags}
+          onTagsChange={(t) => {
+            setTags(t);
+            setDirty(true);
+          }}
+          group={group}
+          onGroupChange={(g) => {
+            setGroup(g);
+            setDirty(true);
+          }}
+          groupOptions={groupOptions}
         />
 
         <div className="flex-1 flex overflow-hidden">

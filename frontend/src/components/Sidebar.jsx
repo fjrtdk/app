@@ -1,5 +1,19 @@
-import { useState } from "react";
-import { Search, Plus, Library, History as HistoryIcon, LayoutGrid, Trash2, LogOut, GitBranch } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Search,
+  Plus,
+  Library,
+  History as HistoryIcon,
+  LayoutGrid,
+  Trash2,
+  LogOut,
+  GitBranch,
+  ChevronRight,
+  Folder,
+  Share2,
+  Hash,
+  X,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,12 +27,15 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { listTags } from "@/lib/api";
 
 const TABS = [
   { id: "history", label: "History", icon: HistoryIcon },
   { id: "patterns", label: "Patterns", icon: LayoutGrid },
   { id: "library", label: "Library", icon: Library },
 ];
+
+const NO_GROUP = "__nogroup__";
 
 export default function Sidebar({
   user,
@@ -31,8 +48,42 @@ export default function Sidebar({
   onLogout,
   searchQ,
   onSearchChange,
+  activeTagFilter,
+  onTagFilterChange,
 }) {
   const [tab, setTab] = useState("history");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [tagOptions, setTagOptions] = useState([]);
+
+  useEffect(() => {
+    if (tab !== "history") return;
+    (async () => {
+      try {
+        const tags = await listTags();
+        setTagOptions(tags);
+      } catch (_) {}
+    })();
+  }, [tab, prompts.length]);
+
+  const grouped = useMemo(() => {
+    const out = {};
+    for (const p of prompts) {
+      const k = p.group || NO_GROUP;
+      if (!out[k]) out[k] = [];
+      out[k].push(p);
+    }
+    // sort groups: real groups alpha, then nogroup
+    const ordered = {};
+    Object.keys(out)
+      .filter((k) => k !== NO_GROUP)
+      .sort()
+      .forEach((k) => (ordered[k] = out[k]));
+    if (out[NO_GROUP]) ordered[NO_GROUP] = out[NO_GROUP];
+    return ordered;
+  }, [prompts]);
+
+  const toggleGroup = (k) =>
+    setCollapsedGroups((c) => ({ ...c, [k]: !c[k] }));
 
   return (
     <aside
@@ -49,7 +100,10 @@ export default function Sidebar({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button data-testid="user-menu-btn" className="rounded-full ring-1 ring-zinc-800 hover:ring-zinc-600 transition">
+            <button
+              data-testid="user-menu-btn"
+              className="rounded-full ring-1 ring-zinc-800 hover:ring-zinc-600 transition"
+            >
               <Avatar className="h-7 w-7">
                 <AvatarImage src={user?.picture} />
                 <AvatarFallback className="bg-zinc-800 text-[10px] text-zinc-300">
@@ -93,7 +147,6 @@ export default function Sidebar({
           className="w-full justify-start bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 h-9 text-sm font-medium"
         >
           <Plus className="w-3.5 h-3.5 mr-2" /> New prompt
-          <span className="ml-auto font-mono text-[10px] text-zinc-500">⌘N</span>
         </Button>
       </div>
 
@@ -124,25 +177,99 @@ export default function Sidebar({
       {/* Body */}
       <ScrollArea className="flex-1">
         {tab === "history" && (
-          <div className="p-2">
-            {prompts.length === 0 && (
-              <div className="px-3 py-8 text-center text-xs text-zinc-500 font-mono">
-                No prompts yet.
-                <br />
-                Type something on the right.
+          <>
+            {/* Tag filter chips */}
+            {tagOptions.length > 0 && (
+              <div className="px-3 pt-3 pb-2 flex flex-wrap gap-1.5 border-b border-zinc-900">
+                {activeTagFilter && (
+                  <button
+                    data-testid="clear-tag-filter"
+                    onClick={() => onTagFilterChange(null)}
+                    className="font-mono text-[10px] px-2 py-0.5 rounded-sm bg-[#C4F159]/10 border border-[#C4F159]/30 text-[#C4F159] flex items-center gap-1"
+                  >
+                    #{activeTagFilter}
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                )}
+                {tagOptions
+                  .filter((t) => t.tag !== activeTagFilter)
+                  .slice(0, 12)
+                  .map((t) => (
+                    <button
+                      key={t.tag}
+                      data-testid={`tag-filter-${t.tag}`}
+                      onClick={() => onTagFilterChange(t.tag)}
+                      className="font-mono text-[10px] px-2 py-0.5 rounded-sm bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition"
+                    >
+                      <Hash className="w-2.5 h-2.5" />
+                      {t.tag}
+                      <span className="text-zinc-600">{t.count}</span>
+                    </button>
+                  ))}
               </div>
             )}
-            {prompts.map((p) => (
-              <PromptRow
-                key={p.id}
-                p={p}
-                active={p.id === activeId}
-                onSelect={() => onSelect(p)}
-                onDelete={() => onDelete(p.id)}
-              />
-            ))}
-          </div>
+
+            <div className="p-2">
+              {prompts.length === 0 && (
+                <div className="px-3 py-8 text-center text-xs text-zinc-500 font-mono">
+                  No prompts yet.
+                  <br />
+                  Type something on the right.
+                </div>
+              )}
+
+              {Object.keys(grouped).length === 1 && grouped[NO_GROUP] ? (
+                grouped[NO_GROUP].map((p) => (
+                  <PromptRow
+                    key={p.id}
+                    p={p}
+                    active={p.id === activeId}
+                    onSelect={() => onSelect(p)}
+                    onDelete={() => onDelete(p.id)}
+                  />
+                ))
+              ) : (
+                Object.entries(grouped).map(([k, list]) => {
+                  const collapsed = collapsedGroups[k];
+                  const label = k === NO_GROUP ? "Ungrouped" : k;
+                  return (
+                    <div key={k} className="mb-1">
+                      <button
+                        data-testid={`group-header-${k === NO_GROUP ? "ungrouped" : k}`}
+                        onClick={() => toggleGroup(k)}
+                        className="w-full px-2 py-1.5 flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-300 transition"
+                      >
+                        <ChevronRight
+                          className={cn(
+                            "w-3 h-3 transition-transform",
+                            !collapsed && "rotate-90"
+                          )}
+                        />
+                        {k === NO_GROUP ? null : <Folder className="w-3 h-3" />}
+                        <span>{label}</span>
+                        <span className="ml-auto text-zinc-600">{list.length}</span>
+                      </button>
+                      {!collapsed && (
+                        <div className="pl-1">
+                          {list.map((p) => (
+                            <PromptRow
+                              key={p.id}
+                              p={p}
+                              active={p.id === activeId}
+                              onSelect={() => onSelect(p)}
+                              onDelete={() => onDelete(p.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </>
         )}
+
         {tab === "patterns" && (
           <div className="p-2 space-y-1">
             {patterns.map((p) => (
@@ -189,6 +316,9 @@ function PromptRow({ p, active, onSelect, onDelete }) {
       <div className="flex items-center gap-2">
         {p.parent_prompt_id && <GitBranch className="w-3 h-3 text-zinc-500 shrink-0" />}
         <div className="text-[13px] font-medium truncate flex-1">{p.title}</div>
+        {p.share_token && (
+          <Share2 className="w-3 h-3 text-[#C4F159]/80 shrink-0" />
+        )}
         <button
           data-testid={`delete-prompt-${p.id}`}
           onClick={(e) => {
@@ -207,6 +337,14 @@ function PromptRow({ p, active, onSelect, onDelete }) {
             {p.selected_pattern}
           </span>
         )}
+        {p.tags?.slice(0, 2).map((t) => (
+          <span
+            key={t}
+            className="font-mono text-[9px] text-zinc-500"
+          >
+            #{t}
+          </span>
+        ))}
         <span className="text-[10px] text-zinc-500 ml-auto">
           {new Date(p.updated_at).toLocaleDateString(undefined, {
             month: "short",

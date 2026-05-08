@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 2 testing of Prompt Optimizer P1/P2 features (SSE streaming, usage/cost, groups/tags meta, share links, list filters, ShareView). 6/6 new backend pytest cases passed (in addition to 15/15 from iteration 1). UI flows verified end-to-end via Playwright with synthetic Mongo session: SSE streaming renders deltas progressively, usage-readout shows tokens/cost/latency, Cmd/Ctrl+Enter triggers optimize, Esc cancels stream, MetaBar title/tag/group all functional, Sidebar group headers + tag-filter chips work after refresh, Share dropdown generates URL, public ShareView at /share/{token} renders title/raw/optimized/author/tags with 'Build yours' CTA, invalid token shows clean 404 page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Workbench (handleOptimize abort)", "issue": "Pressing Esc to cancel an in-progress stream surfaces a confusing error toast: 'Optimization failed: Failed to execute postMessage on Window: Request object could not be cloned.' This appears to be the AbortError being passed into a toast that tries to clone a non-cloneable error object. Cancellation is a feature, not a failure, so it should either silently dismiss or show a 'Cancelled' info toast.", "selector": "toast/notification on cancel", "priority": "MEDIUM"},
+      {"component": "Sidebar tag-filter chips", "issue": "Newly-added tag does not appear in sidebar tag-filter chip list until a manual page reload; appears to be missing a refetch of /api/prompts-meta/tags after MetaBar tag mutations. After reload chips render correctly and clicking filters the list (clear-tag-filter appears).", "selector": "[data-testid^=\"tag-filter-\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ShareView 404 page", "issues": ["404 page CTA is labelled 'Go to Prompt Optimizer' but lacks the requested data-testid='goto-app-btn' or 'share-not-found' marker. Consider adding data-testid for testability. Visual design is fine."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_backend.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/iteration2_results.xml"
+  ],
+  "action_items": [
+    "Catch AbortError in Workbench handleOptimize and skip/replace the failure toast (avoid cloning the error object — pass only a string message).",
+    "After saving a tag via MetaBar, trigger refetch of /api/prompts-meta/tags so sidebar tag-filter chips update without page reload (similarly for groups when newly created).",
+    "Optionally add data-testid='share-not-found' / 'goto-app-btn' on ShareView 404 state for stricter test selectors."
+  ],
+  "critical_code_review_comments": [
+    "server.py /optimize-prompt/stream: event_generator persists the prompt only AFTER the stream finishes — if the client disconnects mid-stream (Esc), persistence is skipped (Starlette cancels the generator). Acceptable, but consider using request.is_disconnected() and saving partial output if desired. Currently working as designed.",
+    "server.py /api/share/{token} returns SharedPromptOut without share_token in payload (good — prevents accidental token leakage in public response). Author lookup is a second DB call per request; for high traffic add an aggregation lookup or cache user names.",
+    "server.py: still uses deprecated @app.on_event hooks (flagged in iteration 1).",
+    "Frontend Toolbar share dropdown: clicking 'Generate read-only link' closes the dropdown (default Radix behavior on DropdownMenuItem). UX-wise it's fine because re-opening shows the URL, but a user without that knowledge may think nothing happened. Consider e.preventDefault() on onSelect or showing a brief 'Link created' toast.",
+    "Streaming endpoint sets X-Accel-Buffering: no — good for SSE through proxies. Confirmed working through preview ingress.",
+    "Sidebar tag-filter / group lists likely fetched once via listTags/listGroups on mount; mutating tags client-side without invalidating these queries causes stale UI (see ui_bug above)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration2.py (created)"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 new + 15/15 prior unaffected)",
+    "frontend": "~90% — all P1/P2 user flows functional; minor UX bugs on cancel-toast and tag-chip refresh"
+  },
+  "test_credentials": "Synthetic MongoDB session per /app/auth_testing.md. All test users/sessions/prompts/runs cleaned up post-test (users:2 sessions:2 prompts:4 runs:2 deleted).",
+  "seed_data_creation": "None persisted.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 2 backend tests at /app/backend/tests/test_iteration2.py — uses same conftest.py session fixture. SSE stream test reads chunks via requests stream=True. Share lifecycle test creates a 2nd synthetic user inline to verify ownership 404. UI tests rely on injected session_token cookie (httpOnly, sameSite=None, secure) on domain pattern-refine.preview.emergentagent.com. To verify ShareView quickly: POST /api/prompts then POST /api/prompts/{id}/share, then navigate browser to /share/{token} (no auth required). Cancel-toast bug reproduces by starting optimize and pressing Esc — postMessage clone error appears.",
+  "endpoints_tested_iter2": [
+    "POST /api/optimize-prompt (verified usage object: prompt_tokens, completion_tokens, total_tokens, cost_usd)",
+    "POST /api/optimize-prompt/stream (SSE: meta -> deltas -> usage -> done; auto-saves to history; 401 unauth)",
+    "GET /api/prompts-meta/groups (sorted, no nulls)",
+    "GET /api/prompts-meta/tags (count desc, tag asc)",
+    "POST /api/prompts/{id}/share (idempotent — same token on re-call; 404 for non-owner; 404 for unknown id)",
+    "DELETE /api/prompts/{id}/share (clears token; subsequent /api/share/{token} -> 404)",
+    "GET /api/share/{token} (PUBLIC, no auth; SharedPromptOut with author_name; 404 invalid)",
+    "GET /api/prompts?tag=&group= (filter combinators)"
+  ],
+  "ui_flows_tested_iter2": [
+    "/app workbench loads with injected session cookie",
+    "Streaming optimize: cancel-btn appears during stream; deltas render incrementally in OUTPUT_PANE; usage-readout populates with '<N> tok ~$<cost> <latency>s'",
+    "Auto-save adds prompt row to history sidebar after stream",
+    "MetaBar: title-input, tag-input (Enter to add → tag-chip-{name} renders), group-btn (creates group folder)",
+    "Sidebar: group header [data-testid=group-header-UITest] visible after group set; tag-filter chips render after page reload (NOT on live mutation — see bug)",
+    "Tag filter chip click → clear-tag-filter appears, list filters",
+    "Toolbar Share dropdown: share-create-btn → on re-open shows share-url-display + share-copy-link + unshare-btn",
+    "Toolbar Export dropdown: export-md-copy puts markdown in clipboard with '## Raw input' and '## Optimized output' sections (verified via navigator.clipboard.readText, len=895)",
+    "ShareView /share/{token}: renders title='Iter2 ShareView Test', author='UI Tester', tags #demo #shared, raw_input, optimized_output, share-copy-btn, cta-build-yours='Build yours' (link to /app)",
+    "ShareView invalid token: renders '404 / This prompt isn't available' page with 'Go to Prompt Optimizer' CTA",
+    "Keyboard: Ctrl+Enter on editor triggers optimize (cancel-btn appears); Esc cancels stream (cancel-btn disappears)"
+  ]
+}
