@@ -44,7 +44,7 @@ export default function ShareView() {
 
   if (error) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#050505] text-center px-6">
+      <div data-testid="share-not-found" className="h-screen w-screen flex items-center justify-center bg-[#050505] text-center px-6">
         <div className="max-w-md space-y-4">
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
             404
@@ -64,8 +64,7 @@ export default function ShareView() {
   }
 
   return (
-    <div data-testid="share-view" className="min-h-screen w-full bg-[#050505] text-white">
-      {/* Header */}
+    <div data-testid="share-view" className="min-h-screen w-full bg-[#050505] text-white">      {/* Header */}
       <header className="h-14 border-b border-zinc-800 px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-sm bg-[#C4F159]" />

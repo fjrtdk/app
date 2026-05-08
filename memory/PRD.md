@@ -22,14 +22,13 @@ A lightweight web app that turns rough notes into Fabric-style structured prompt
 - Live suggestions (heuristic with optional NIM fallback)
 
 ## Implemented (2026-02)
-- Backend: auth (Google), patterns seed, /optimize-prompt, /suggest, prompts CRUD, fork, rerun
-- Frontend: Login + AuthCallback + Workbench (split-pane, sidebar tabs, toolbar)
-- NIM integration, dark theme + Volt Lime tokens
+- Backend: auth (Google), patterns seed, /optimize-prompt + /optimize-prompt/stream (SSE), /suggest, prompts CRUD, fork, rerun, share/unshare, public /share/{token}, prompts-meta groups + tags
+- Frontend: Login + AuthCallback + Workbench (split-pane, sidebar tabs, toolbar, MetaBar with title/tags/group, group-collapsible history, tag-filter chips, share dropdown, export dropdown), public ShareView page
+- NIM integration with token usage + estimated cost, streaming with cancellable abort
+- Dark theme + Volt Lime tokens
 
-## Backlog (P1+)
-- Streaming optimize output (SSE) — P1
-- Group / folder management UI — P1
-- Custom user patterns — P2 (out of V1 by user choice)
-- Token & cost visibility — P2
-- Markdown / JSON export — P2
-- Browser extension — P3
+## Backlog
+- P2: Custom user patterns (deferred — out of V1 by user choice)
+- P2: Browser extension
+- P3: Pattern marketplace, multi-provider
+- P3: Prompt quality scoring

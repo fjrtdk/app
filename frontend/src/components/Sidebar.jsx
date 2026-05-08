@@ -63,7 +63,7 @@ export default function Sidebar({
         setTagOptions(tags);
       } catch (_) {}
     })();
-  }, [tab, prompts.length]);
+  }, [tab, prompts]);
 
   const grouped = useMemo(() => {
     const out = {};

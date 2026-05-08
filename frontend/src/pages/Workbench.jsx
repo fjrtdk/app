@@ -200,6 +200,7 @@ export default function Workbench() {
     const startedAt = Date.now();
     let fullOutput = "";
     let resolvedPromptId = activeId;
+    let cancelled = false;
 
     const cancel = streamOptimize(
       {
@@ -209,8 +210,9 @@ export default function Workbench() {
         save: true,
       },
       (evt) => {
+        if (cancelled) return;
         if (evt.error) {
-          toast.error(`Optimization failed: ${evt.error}`);
+          toast.error(`Optimization failed: ${String(evt.error)}`);
           setOptimizing(false);
           return;
         }
@@ -230,7 +232,6 @@ export default function Workbench() {
           setOptimizing(false);
           setDirty(false);
           refreshPrompts();
-          // sync title from server-assigned title for new prompts
           (async () => {
             if (!activeId && resolvedPromptId) {
               try {
@@ -246,7 +247,10 @@ export default function Workbench() {
         }
       }
     );
-    cancelStreamRef.current = cancel;
+    cancelStreamRef.current = () => {
+      cancelled = true;
+      cancel();
+    };
   };
 
   const handleCancel = () => {
