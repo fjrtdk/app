@@ -1,0 +1,134 @@
+{
+  "theme": "dark",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) - Developer Tool Variant",
+  "emotions": ["Precision", "Authority", "Focus", "Speed"],
+  "colors": {
+    "background": {
+      "base": "#050505",
+      "surface": "#0F0F11",
+      "surface_hover": "#18181B",
+      "surface_active": "#27272A"
+    },
+    "primary": {
+      "default": "#C4F159",
+      "hover": "#D9F99D",
+      "foreground": "#000000"
+    },
+    "secondary": {
+      "default": "#27272A",
+      "hover": "#3F3F46",
+      "foreground": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#71717A"
+    },
+    "border": {
+      "default": "#27272A",
+      "focus": "#52525B",
+      "active": "#C4F159"
+    },
+    "status": {
+      "success": "#4ADE80",
+      "warning": "#FBBF24",
+      "error": "#EF4444",
+      "info": "#60A5FA"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "ui": "'IBM Plex Sans', sans-serif",
+      "editor": "'JetBrains Mono', monospace",
+      "headings": "'IBM Plex Sans', sans-serif"
+    },
+    "scales": {
+      "h1": "text-4xl tracking-tight font-bold",
+      "h2": "text-2xl tracking-tight font-semibold",
+      "h3": "text-lg tracking-tight font-medium",
+      "body": "text-base leading-relaxed",
+      "ui_small": "text-sm",
+      "ui_tiny": "text-xs tracking-[0.05em] uppercase font-medium",
+      "editor_text": "text-[15px] leading-[1.6]"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Terminal-adjacent, grid-based, highly structured. Zero unnecessary padding, optical alignment for technical interfaces.",
+    "sidebar_width": "280px",
+    "header_height": "56px",
+    "panels": {
+      "padding": "p-6",
+      "gap": "gap-4"
+    },
+    "split_pane": {
+      "divider_width": "1px",
+      "divider_color": "border-zinc-800"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#C4F159] text-black font-semibold rounded-md px-4 py-2 hover:bg-[#D9F99D] transition-colors focus:ring-2 focus:ring-[#C4F159]/50 focus:outline-none",
+      "secondary": "bg-zinc-800 text-white font-medium rounded-md px-4 py-2 hover:bg-zinc-700 transition-colors border border-zinc-700 focus:ring-2 focus:ring-zinc-600 focus:outline-none",
+      "ghost": "bg-transparent text-zinc-300 font-medium rounded-md px-3 py-1.5 hover:bg-zinc-800 hover:text-white transition-colors",
+      "icon_button": "p-2 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+    },
+    "inputs": {
+      "search": "bg-zinc-900 border border-zinc-800 rounded-md px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-[#C4F159] focus:ring-1 focus:ring-[#C4F159] transition-all",
+      "editor_textarea": "w-full h-full bg-transparent border-none resize-none text-[#FFFFFF] font-['JetBrains_Mono'] focus:ring-0 focus:outline-none placeholder-zinc-600"
+    },
+    "cards": {
+      "default": "bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors"
+    },
+    "tags": {
+      "default": "px-2 py-0.5 rounded-sm bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700"
+    },
+    "dropdowns": {
+      "trigger": "flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 text-sm hover:border-zinc-700",
+      "menu": "bg-[#0F0F11] border border-zinc-800 rounded-md shadow-xl overflow-hidden"
+    }
+  },
+  "motion": {
+    "hover": "transition-all duration-150 ease-in-out",
+    "panels": "transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+    "focus": "transition-shadow duration-150 ease-in-out"
+  },
+  "media": {
+    "icons_library": "@phosphor-icons/react",
+    "image_urls": {
+      "login_background": {
+        "url": "https://images.unsplash.com/photo-1659957006181-7ba1d48864cc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwyfHxkYXJrJTIwYXJjaGl0ZWN0dXJlJTIwbWluaW1hbHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NzgyNTQxOTd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Minimal dark architecture towers for login background overlay"
+      }
+    }
+  },
+  "specific_views": {
+    "app_layout": {
+      "structure": "100vh flex layout. Left sidebar (fixed), Right main content (flex-1 flex col).",
+      "sidebar": "bg-[#0F0F11] border-r border-zinc-800 overflow-y-auto custom-scrollbar. Contains logo, Search, Tabs (Prompts, Patterns, History).",
+      "main_workspace": "flex flex-col h-full bg-[#050505]."
+    },
+    "toolbar": {
+      "structure": "H-14 border-b border-zinc-800 flex items-center justify-between px-6 bg-[#050505]",
+      "left": "Pattern selector dropdown",
+      "right": "Optimize button (Primary Volt Lime), Fork button, Save button, Copy button"
+    },
+    "editor_split_pane": {
+      "structure": "flex-1 flex overflow-hidden",
+      "left_pane": "flex-1 p-6 relative group. Raw notes input area.",
+      "divider": "w-[1px] bg-zinc-800 hover:bg-zinc-600 cursor-col-resize transition-colors",
+      "right_pane": "flex-1 p-6 overflow-y-auto relative bg-[#050505]. Optimized output rendered as formatted markdown/code."
+    }
+  },
+  "accessibility": {
+    "focus_states": "All interactive elements must have visible focus rings (`focus:ring-2 focus:ring-[#C4F159]/50` for primary, `focus:ring-zinc-600` for dark elements).",
+    "contrast": "Ensure 4.5:1 ratio. Text colors are `#FFFFFF` and `#A1A1AA` on `#050505` and `#0F0F11` backgrounds.",
+    "testing": "All key elements must include `data-testid` attributes (e.g., `data-testid='optimize-button'`, `data-testid='pattern-selector'`)."
+  },
+  "instructions_to_main_agent": [
+    "Use standard HTML/Tailwind for layout structure (flexbox, grid) instead of heavy layout components to maintain the snappy, editor-first feel.",
+    "Implement Shadcn UI for Dialogs, Select/Dropdowns, Tooltips, and ScrollAreas, customizing them heavily with the provided color tokens (border-zinc-800, bg-[#0F0F11]).",
+    "The Optimize button is the primary CTA and should use the highly visible Volt Lime (#C4F159).",
+    "Ensure the split pane allows horizontal scrolling or wrapping if needed, but primarily it should be flex-1 / flex-1 equal split.",
+    "For the code editor inputs and outputs, apply the 'JetBrains Mono' font explicitly."
+  ]
+}
