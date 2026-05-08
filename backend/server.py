@@ -601,7 +601,10 @@ async def rerun_prompt(prompt_id: str, payload: RerunRequest, user: User = Depen
 # ---------- Groups & Tags listing ----------
 @api.get("/prompts-meta/groups")
 async def list_groups(user: User = Depends(get_current_user)):
-    cursor = db.prompts.find({"user_id": user.user_id, "group": {"$ne": None}}, {"_id": 0, "group": 1})
+    cursor = db.prompts.find(
+        {"user_id": user.user_id, "group": {"$ne": None}},
+        {"_id": 0, "group": 1},
+    ).limit(2000)
     groups = set()
     async for d in cursor:
         g = d.get("group")
@@ -612,7 +615,10 @@ async def list_groups(user: User = Depends(get_current_user)):
 
 @api.get("/prompts-meta/tags")
 async def list_tags(user: User = Depends(get_current_user)):
-    cursor = db.prompts.find({"user_id": user.user_id}, {"_id": 0, "tags": 1})
+    cursor = db.prompts.find(
+        {"user_id": user.user_id},
+        {"_id": 0, "tags": 1},
+    ).limit(2000)
     tag_counts: Dict[str, int] = {}
     async for d in cursor:
         for t in d.get("tags", []) or []:
