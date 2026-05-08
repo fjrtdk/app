@@ -84,7 +84,9 @@ export function streamOptimize(payload, onEvent) {
         try {
           const j = await res.json();
           detail = j.detail || detail;
-        } catch (_) {}
+        } catch (err) {
+          console.error("[streamOptimize errorParse]", err);
+        }
         onEvent({ error: detail });
         return;
       }
@@ -105,7 +107,9 @@ export function streamOptimize(payload, onEvent) {
           if (!json) continue;
           try {
             onEvent(JSON.parse(json));
-          } catch (_) {}
+          } catch (err) {
+            console.error("[streamOptimize parse]", err, json);
+          }
         }
       }
     } catch (e) {

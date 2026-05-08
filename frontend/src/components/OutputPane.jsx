@@ -34,7 +34,7 @@ function OptimizingShimmer() {
     <div className="space-y-3">
       {[80, 60, 95, 70, 50].map((w, i) => (
         <div
-          key={i}
+          key={`shimmer-${i}-${w}`}
           className="h-3 rounded-sm bg-zinc-900 animate-pulse"
           style={{ width: `${w}%`, animationDelay: `${i * 80}ms` }}
         />

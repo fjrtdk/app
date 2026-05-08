@@ -29,7 +29,8 @@ export default function ShareView() {
     try {
       await navigator.clipboard.writeText(data.optimized_output);
       toast.success("Copied");
-    } catch (_) {
+    } catch (err) {
+      console.error("[shareCopy]", err);
       toast.error("Copy failed");
     }
   };

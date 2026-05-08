@@ -61,7 +61,9 @@ export default function Sidebar({
       try {
         const tags = await listTags();
         setTagOptions(tags);
-      } catch (_) {}
+      } catch (err) {
+        console.error("[listTags]", err);
+      }
     })();
   }, [tab, prompts]);
 

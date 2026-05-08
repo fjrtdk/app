@@ -11,7 +11,9 @@ export function AuthProvider({ children }) {
     try {
       const u = await getMe();
       setUser(u);
-    } catch (_) {
+    } catch (err) {
+      // 401 is the expected "not logged in" path; other errors worth logging
+      if (err?.response?.status !== 401) console.error("[checkAuth]", err);
       setUser(null);
     } finally {
       setLoading(false);

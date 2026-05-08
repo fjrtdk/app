@@ -28,7 +28,8 @@ export default function AuthCallback() {
         // Clean the hash from the URL
         window.history.replaceState(null, "", "/app");
         navigate("/app", { replace: true, state: { user: u } });
-      } catch (e) {
+      } catch (err) {
+        console.error("[authCallback]", err);
         navigate("/login", { replace: true });
       }
     })();

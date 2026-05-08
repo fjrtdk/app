@@ -63,14 +63,18 @@ export default function Workbench() {
       if (tagFilter) params.tag = tagFilter;
       const list = await listPrompts(params);
       setPrompts(list);
-    } catch (_) {}
+    } catch (err) {
+      console.error("[refreshPrompts]", err);
+    }
   }, [searchQ, tagFilter]);
 
   const refreshGroups = useCallback(async () => {
     try {
       const g = await listGroups();
       setGroupOptions(g);
-    } catch (_) {}
+    } catch (err) {
+      console.error("[refreshGroups]", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -85,7 +89,8 @@ export default function Workbench() {
         setPatterns(pats);
         setPrompts(ps);
         setGroupOptions(gs);
-      } catch (_) {
+      } catch (err) {
+        console.error("[loadWorkspace]", err);
         toast.error("Failed to load workspace");
       }
     })();
@@ -135,7 +140,9 @@ export default function Workbench() {
       try {
         const s = await apiSuggest(rawInput, false);
         setSuggestion({ pattern: s.suggested_pattern, tags: s.suggested_tags });
-      } catch (_) {}
+      } catch (err) {
+        console.error("[suggest]", err);
+      }
     }, 600);
     return () => clearTimeout(suggestRef.current);
   }, [rawInput]);
@@ -170,7 +177,9 @@ export default function Workbench() {
         setDirty(false);
         refreshPrompts();
         refreshGroups();
-      } catch (_) {}
+      } catch (err) {
+        console.error("[autosave]", err);
+      }
     }, 1000);
     return () => clearTimeout(autosaveRef.current);
   }, [
@@ -238,7 +247,9 @@ export default function Workbench() {
                 const list = await listPrompts();
                 const p = list.find((x) => x.id === resolvedPromptId);
                 if (p && !title) setTitle(p.title);
-              } catch (_) {}
+              } catch (err) {
+                console.error("[postOptimizeTitleSync]", err);
+              }
             }
           })();
           toast.success(
@@ -272,7 +283,8 @@ export default function Workbench() {
       await refreshPrompts();
       handleSelect(f);
       toast.success("Forked");
-    } catch (_) {
+    } catch (err) {
+      console.error("[fork]", err);
       toast.error("Fork failed");
     }
   };
@@ -285,7 +297,8 @@ export default function Workbench() {
     try {
       await navigator.clipboard.writeText(output);
       toast.success("Copied to clipboard");
-    } catch (_) {
+    } catch (err) {
+      console.error("[copy]", err);
       toast.error("Copy failed");
     }
   };
@@ -317,7 +330,8 @@ export default function Workbench() {
       refreshPrompts();
       refreshGroups();
       toast.success("Saved");
-    } catch (_) {
+    } catch (err) {
+      console.error("[save]", err);
       toast.error("Save failed");
     }
   };
@@ -328,7 +342,8 @@ export default function Workbench() {
       if (id === activeId) handleNew();
       refreshPrompts();
       toast.success("Deleted");
-    } catch (_) {
+    } catch (err) {
+      console.error("[delete]", err);
       toast.error("Delete failed");
     }
   };
@@ -346,11 +361,13 @@ export default function Workbench() {
       try {
         await navigator.clipboard.writeText(url);
         toast.success("Public link copied");
-      } catch (_) {
+      } catch (err) {
+        console.error("[shareCopy]", err);
         toast.success("Public link created");
       }
       refreshPrompts();
-    } catch (_) {
+    } catch (err) {
+      console.error("[share]", err);
       toast.error("Share failed");
     }
   };
@@ -362,7 +379,8 @@ export default function Workbench() {
       setShareToken(null);
       toast.success("Unshared");
       refreshPrompts();
-    } catch (_) {
+    } catch (err) {
+      console.error("[unshare]", err);
       toast.error("Unshare failed");
     }
   };
@@ -399,7 +417,8 @@ ${output}
     try {
       await navigator.clipboard.writeText(buildMarkdown());
       toast.success("Markdown copied");
-    } catch (_) {
+    } catch (err) {
+      console.error("[exportMd]", err);
       toast.error("Copy failed");
     }
   };
@@ -445,7 +464,8 @@ ${output}
     try {
       await navigator.clipboard.writeText(JSON.stringify(obj, null, 2));
       toast.success("JSON copied");
-    } catch (_) {
+    } catch (err) {
+      console.error("[exportJson]", err);
       toast.error("Copy failed");
     }
   };
