@@ -73,5 +73,20 @@ Key files affected:
 | Firebase JS SDK on frontend | Handles Google sign-in via popup/redirect | — Pending |
 | Popup over redirect | Simpler UX, no page reload on sign-in | — Pending |
 
+## Requirement Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| AUTH-01: Replace Emergent OAuth with Firebase Google sign-in | 3 | Planned |
+| AUTH-02: Firebase Admin SDK validates ID tokens | 2 | Planned |
+| AUTH-03: Custom session cookie after Firebase auth | 2 | Planned |
+| AUTH-04: Login page uses Firebase signInWithPopup | 3 | Planned |
+| AUTH-05: AuthCallback handles Firebase flow | 3 | Planned |
+| AUTH-06: Remove Emergent auth code | 4 | Planned |
+| AUTH-07: All auth-guarded endpoints work unchanged | 5 | Planned |
+| AUTH-08: Backend env vars for Firebase | 1 | Planned |
+| AUTH-09: Frontend env var for Firebase config | 1 | Planned |
+| AUTH-10: Remove Emergent badge + PostHog | 4 | Planned |
+
 ---
-*Last updated: 2026-05-10 after project initialization*
+*Last updated: 2026-05-10 after roadmap creation*
