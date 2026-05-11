@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: prompt-optimizer-api
+    runtime: python
+    repo: https://github.com/fjrtdk/app
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_NAME
+        value: prompt_optimizer
+      - key: NIM_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NIM_MODEL
+        value: meta/llama-3.3-70b-instruct
+      - key: CORS_ORIGINS
+        value: https://prompt-optimizer-seven-phi.vercel.app
+      - key: FIREBASE_PROJECT_ID
+        value: prompt-optimizer-fjrt
+      - key: FIREBASE_CLIENT_EMAIL
+        value: firebase-adminsdk-fbsvc@prompt-optimizer-fjrt.iam.gserviceaccount.com
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: NIM_API_KEY
+        sync: false
