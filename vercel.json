@@ -1,0 +1,14 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "backend": false,
+      ".planning": false
+    }
+  },
+  "buildCommand": "cd frontend && npx craco build",
+  "outputDirectory": "frontend/build",
+  "framework": "create-react-app",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
