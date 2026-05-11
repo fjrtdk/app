@@ -15,16 +15,20 @@ Users can optimize a prompt in one click and trust their work is saved.
 - ✓ Prompt optimization via NIM (sync POST + SSE stream) — existing
 - ✓ 6 Fabric-style system patterns (improve_prompt, create_coding_prompt, etc.) — existing
 - ✓ Prompt CRUD with fork, rerun, share (public read-only links) — existing
-- ✓ Auth-gated sessions (Google OAuth, cookie, 7d expiry) — existing (Emergent)
+- ✓ Auth-gated sessions (Firebase Google sign-in via popup, cookie-based, 7d expiry) — v1.0
 - ✓ Heuristic + NIM suggest endpoint — existing
 - ✓ Split-pane editor (raw notes ↔ optimized output) — existing
 - ✓ Dark theme, Volt Lime accent, IBM Plex Sans + JetBrains Mono — existing
 - ✓ History with search, tags, group filtering — existing
 - ✓ Token usage tracking + cost estimation — existing
+- ✓ Emergent dependency removed (auth, badge, PostHog, visual-edits) — v1.0
+- ✓ Firebase Admin SDK validates ID tokens server-side — v1.0
+- ✓ Firebase JS SDK for Google sign-in popup — v1.0
+- ✓ .env.example files document all required env vars — v1.0
 
 ### Active
 
-All requirements are complete. See implementation details below.
+- No new requirements defined for next milestone
 
 ### Out of Scope
 
@@ -36,19 +40,24 @@ All requirements are complete. See implementation details below.
 
 ## Context
 
-Brownfield project. Existing codebase is a working Prompt Optimizer with FastAPI backend, React frontend (CRA + Craco), MongoDB, and Nvidia NIM LLM. Auth is via Emergent's Google OAuth proxy (`auth/session` exchanges a session_id for user data + creates cookie). The Firebase migration replaces the Emergent dependency while keeping the same session cookie pattern so all guarded endpoints remain unchanged.
+Shipped v1.0 (Firebase Auth Migration) on 2026-05-11. Codebase is a working Prompt Optimizer with FastAPI backend, React frontend (CRA + Craco), MongoDB, Nvidia NIM LLM, and Firebase Auth.
 
-Key files affected:
-- `backend/server.py` — add Firebase Admin init, new `/api/auth/firebase` endpoint, remove Emergent `/api/auth/session`
-- `frontend/src/context/AuthContext.jsx` — Firebase `loginWithGoogle` via `signInWithPopup`
-- `frontend/src/pages/Login.jsx` — calls `loginWithGoogle` from AuthContext
-- `frontend/src/pages/AuthCallback.jsx` — Firebase redirect fallback via `getRedirectResult`
-- `frontend/src/lib/api.js` — added `postFirebaseSession(idToken)`
+**v1.0 Stats:**
+- 36 files changed (+1300/-269)
+- 5 phases, 8 plans completed
+- Firebase replaces Emergent for Google sign-in
+- Same session cookie pattern — all guarded endpoints unchanged
+
+**Key files (post-migration):**
+- `backend/server.py` — Firebase Admin init + POST /api/auth/firebase
+- `frontend/src/context/AuthContext.jsx` — loginWithGoogle via signInWithPopup
 - `frontend/src/lib/firebase.js` — Firebase app config + auth exports
-- `frontend/public/index.html` — removed Emergent script + PostHog + badge
-- `backend/requirements.txt` — added `firebase-admin`
-- `frontend/package.json` — added `firebase`, removed `@emergentbase/visual-edits`
-- `backend/server.py` — Firebase Admin init + `POST /api/auth/firebase` endpoint, removed `POST /api/auth/session`
+- `frontend/src/lib/api.js` — postFirebaseSession(idToken)
+
+**Known issues:**
+- Pre-existing craco build failure (ajv-keywords — unrelated to migration)
+- Yarn lockfile needs regeneration (firebase installed via npm --legacy-peer-deps)
+- Plan 05-02 (E2E manual verification) deferred
 
 ## Constraints
 
@@ -61,10 +70,12 @@ Key files affected:
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Firebase ID token → custom session cookie | Reuses existing session-guarded endpoints with zero changes | Implemented |
-| Firebase Admin SDK on backend | Handles ID token verification server-side | Implemented |
-| Firebase JS SDK on frontend | Handles Google sign-in via popup/redirect | Implemented |
-| Popup over redirect | Simpler UX, no page reload on sign-in | Implemented |
+| Firebase ID token → custom session cookie | Reuses existing session-guarded endpoints with zero changes | ✅ Good |
+| Firebase Admin SDK on backend | Handles ID token verification server-side | ✅ Good |
+| Firebase JS SDK on frontend | Handles Google sign-in via popup/redirect | ✅ Good |
+| Popup over redirect | Simpler UX, no page reload on sign-in | ✅ Good |
+| Certificate(dict) from env vars | No file path dependency, never commit creds | ✅ Good |
+| Start fresh, no user migration | Clean break from Emergent sessions | ✅ Good |
 
 ## Requirement Traceability
 
@@ -82,4 +93,4 @@ Key files affected:
 | AUTH-10: Remove Emergent badge + PostHog | 4 | Complete |
 
 ---
-*Last updated: 2026-05-10 after roadmap creation*
+*Last updated: 2026-05-11 after v1.0 milestone*

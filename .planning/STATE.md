@@ -1,54 +1,53 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: All phases complete — Firebase Auth Migration done
-last_updated: "2026-05-10T18:20:00.000Z"
-last_activity: 2026-05-10 — Created SUMMARY.md for all 5 phases
+milestone_name: Firebase Auth Migration
+status: shipped
+stopped_at: Milestone v1.0 complete
+last_updated: "2026-05-11T06:50:00.000Z"
+last_activity: 2026-05-11 — Committed and tagged v1.0 milestone
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 5
   total_plans: 9
   completed_plans: 8
-  percent: 89
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-10)
+See: .planning/PROJECT.md (updated 2026-05-11)
 
 **Core value:** Users can optimize a prompt in one click and trust their work is saved.
-**Current focus:** Firebase Auth Migration
+**Current focus:** Milestone v1.0 shipped — planning next work
 
 ## Current Position
 
-Phase: 5 of 5 (Verification & Polish)
-Plan: 05-01 — test URLs, .env.example files, AGENTS.md
-Status: All phases complete
-Last activity: 2026-05-10 — Phase 5 executed
+Phase: All 5 complete
+Milestone: v1.0 — SHIPPED 2026-05-11
+Last activity: 2026-05-11 — Milestone v1.0 complete
 
-Progress: █████████░ 89%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: N/A
-- Total execution time: 0 hours
+- Total plans completed: 8
+- Total files changed: 36 (+1300/-269)
+- Phases: 5
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Firebase Project Setup | 1 | 1 | N/A |
-| 2. Backend Firebase Integration | 2 | 2 | N/A |
-| 3. Frontend Firebase Integration | 2 | 2 | N/A |
-| 4. Emergent Removal | 2 | 2 | N/A |
-| 5. Verification & Polish | 1 | 2 | N/A |
+| Phase | Plans | Total | Status |
+|-------|-------|-------|--------|
+| 1. Firebase Project Setup | 1 | 1 | ✅ Complete |
+| 2. Backend Firebase Integration | 2 | 2 | ✅ Complete |
+| 3. Frontend Firebase Integration | 2 | 2 | ✅ Complete |
+| 4. Emergent Removal | 2 | 2 | ✅ Complete |
+| 5. Verification & Polish | 1 | 2 | ◐ Partial (1 deferred) |
 
 ## Accumulated Context
 
@@ -58,29 +57,19 @@ Progress: █████████░ 89%
 - Firebase Admin SDK on backend, Firebase JS SDK on frontend
 - Popup over redirect for sign-in
 - Start fresh (no user migration)
+- Certificate(dict) from env vars (no file path dependency)
+- Session persistence via cookie only (no Firebase auth listener)
 
-### Quick Tasks Completed
+### Deferred Items
 
-| # | Description | Date | Directory |
-|---|-------------|------|----------|
-| summary-1 | Create SUMMARY.md for Phase 1 (Firebase Project Setup) | 2026-05-10 | [summary](./phases/01-firebase-project-setup/01-SUMMARY.md) |
-| summary-2 | Create SUMMARY.md for Phase 2 (Backend Firebase Integration) | 2026-05-10 | [summary](./phases/02-backend-firebase-integration/02-SUMMARY.md) |
-| summary-3 | Create SUMMARY.md for Phase 3 (Frontend Firebase Integration) | 2026-05-10 | [summary](./phases/03-frontend-firebase-integration/03-SUMMARY.md) |
-| summary-4 | Create SUMMARY.md for Phase 4 (Emergent Removal) | 2026-05-10 | [summary](./phases/04-emergent-removal/04-SUMMARY.md) |
-| summary-5 | Create SUMMARY.md + CONTEXT.md for Phase 5 (Verification & Polish) | 2026-05-10 | [summary](./phases/05-verification-and-polish/05-SUMMARY.md) |
-
-### Blockers/Concerns
-
-None yet.
-
-## Deferred Items
-
-| Category | Item | Status | Deferred At |
-|----------|------|--------|-------------|
-| *(none)* | | | |
+| Category | Item | Status |
+|----------|------|--------|
+| e2e | Plan 05-02: Manual E2E verification | needs live MongoDB + NIM |
+| build | craco build failure (ajv-keywords) | pre-existing, unrelated |
+| deps | Yarn lockfile needs regeneration | firebase installed via npm |
 
 ## Session Continuity
 
-Last session: 2026-05-10T15:20:05.850Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-firebase-project-setup/01-CONTEXT.md
+Last session: 2026-05-10
+Milestone: v1.0 shipped 2026-05-11
+Next: Planning next milestone

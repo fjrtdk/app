@@ -1,28 +1,17 @@
 # Roadmap: Prompt Optimizer — Firebase Auth Migration
 
-## Overview
+## Milestones
 
-Replace Emergent Google OAuth with Firebase Google sign-in across the full stack. Backend gets Firebase Admin SDK for ID token verification, frontend gets Firebase JS SDK for sign-in. Session cookie format stays the same so all guarded endpoints keep working without changes. Then strip all Emergent dependencies and clean up.
+- ✅ **v1.0 Firebase Auth Migration** — Phases 1-5 (shipped 2026-05-11)
 
 ## Phases
 
-- [ ] **Phase 1: Firebase Project Setup** — Create Firebase project, service account, configure env vars
-- [ ] **Phase 2: Backend Firebase Integration** — Add firebase-admin, new `/api/auth/firebase` endpoint, session creation
-- [ ] **Phase 3: Frontend Firebase Integration** — Add Firebase JS SDK, Google sign-in popup, rewrite AuthContext/Login/AuthCallback
-- [ ] **Phase 4: Emergent Removal** — Strip Emergent auth, badge, PostHog, visual-edits
-- [ ] **Phase 5: Verification & Polish** — Update tests, verify all endpoints, env docs
-
-## Phase Details
+<details>
+<summary>✅ v1.0 Firebase Auth Migration (Phases 1-5) — SHIPPED 2026-05-11</summary>
 
 ### Phase 1: Firebase Project Setup
 **Goal**: Firebase project ready with credentials
 **Depends on**: Nothing
-**Requirements**: AUTH-08, AUTH-09
-**Success Criteria** (what must be TRUE):
-  1. Firebase project exists with Google sign-in enabled
-  2. Service account key downloaded
-  3. Web app configured with Firebase config object
-  4. `.env` files created for both backend and frontend with Firebase vars
 **Plans**: 1 plan
 
 Plans:
@@ -31,13 +20,6 @@ Plans:
 ### Phase 2: Backend Firebase Integration
 **Goal**: Backend accepts Firebase ID tokens and issues session cookies
 **Depends on**: Phase 1
-**Requirements**: AUTH-02, AUTH-03, AUTH-08
-**Success Criteria** (what must be TRUE):
-  1. `firebase-admin` SDK initialized on backend
-  2. `POST /api/auth/firebase` accepts ID token, verifies it, creates session
-  3. Session cookie uses same format/storage as existing Emergent sessions
-  4. All existing auth-guarded endpoints (`/optimize-prompt`, `/prompts/*`, etc.) work with new session cookies
-  5. Existing Emergent session flow still works (no regressions yet)
 **Plans**: 2 plans
 
 Plans:
@@ -47,13 +29,6 @@ Plans:
 ### Phase 3: Frontend Firebase Integration
 **Goal**: Frontend signs in with Google via Firebase, gets session
 **Depends on**: Phase 2
-**Requirements**: AUTH-01, AUTH-04, AUTH-05, AUTH-09
-**Success Criteria** (what must be TRUE):
-  1. Login page shows "Sign in with Google" button powered by Firebase
-  2. Google sign-in popup works end-to-end: popup → token → backend session → cookie
-  3. AuthCallback page handles Firebase flow seamlessly
-  4. AuthContext uses Firebase auth state, calls POST /api/auth/firebase on sign-in
-  5. User stays logged in across page refreshes (cookie-based)
 **Plans**: 2 plans
 
 Plans:
@@ -63,15 +38,6 @@ Plans:
 ### Phase 4: Emergent Removal
 **Goal**: All Emergent dependencies and code removed
 **Depends on**: Phase 3
-**Requirements**: AUTH-06, AUTH-10
-**Success Criteria** (what must be TRUE):
-  1. `POST /api/auth/session` endpoint removed
-  2. `GET /api/auth/logout` updated (no longer needs Emergent)
-  3. Emergent script tag removed from `public/index.html`
-  4. PostHog analytics removed from `public/index.html`
-  5. Emergent badge removed from `public/index.html`
-  6. `@emergentbase/visual-edits` removed from craco and package.json
-  7. Emergent-related env vars no longer required
 **Plans**: 2 plans
 
 Plans:
@@ -81,25 +47,20 @@ Plans:
 ### Phase 5: Verification & Polish
 **Goal**: Everything works, tests pass, docs updated
 **Depends on**: Phase 4
-**Requirements**: AUTH-07
-**Success Criteria** (what must be TRUE):
-  1. All existing backend tests pass with new auth flow
-  2. Manual auth flow works (login → optimize → save → logout → login → see history)
-  3. `.env.example` files document required Firebase vars
-  4. No Emergent references remain in the codebase
-**Plans**: 2 plans
+**Plans**: 2 plans (1 complete, 1 deferred)
 
 Plans:
 - [x] 05-01: Update backend tests for Firebase auth, add .env.example files
+- [ ] 05-02: Manual E2E auth flow verification (deferred — needs live infrastructure)
+
+</details>
 
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Firebase Project Setup | 1/1 | Complete | 2026-05-10 |
-| 2. Backend Firebase Integration | 2/2 | Complete | 2026-05-10 |
-| 3. Frontend Firebase Integration | 2/2 | Complete | 2026-05-10 |
-| 4. Emergent Removal | 2/2 | Complete | 2026-05-10 |
-| 5. Verification & Polish | 1/2 | Partial | 2026-05-10 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|---------------|--------|-----------|
+| 1. Firebase Project Setup | v1.0 | 1/1 | ✅ Complete | 2026-05-10 |
+| 2. Backend Firebase Integration | v1.0 | 2/2 | ✅ Complete | 2026-05-10 |
+| 3. Frontend Firebase Integration | v1.0 | 2/2 | ✅ Complete | 2026-05-10 |
+| 4. Emergent Removal | v1.0 | 2/2 | ✅ Complete | 2026-05-10 |
+| 5. Verification & Polish | v1.0 | 1/2 | ◐ Partial (1 deferred) | 2026-05-10 |
