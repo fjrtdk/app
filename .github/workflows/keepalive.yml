@@ -1,0 +1,19 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    # Render free tier spins down after 15 min of inactivity.
+    # This pings every 14 min to stay just under the threshold.
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+            "${BACKEND_URL}/api/health" || echo "Ping failed"
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
