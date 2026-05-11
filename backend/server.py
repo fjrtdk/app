@@ -1,12 +1,14 @@
 """Prompt Optimizer backend.
 
-FastAPI + MongoDB + Nvidia NIM (OpenAI-compatible) + Emergent Google Auth.
+FastAPI + MongoDB + Nvidia NIM (OpenAI-compatible) + Firebase Auth.
 """
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from dotenv import load_dotenv
 import json
 import secrets
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
@@ -18,7 +20,6 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
-import httpx
 from openai import AsyncOpenAI, APIError
 
 from patterns_seed import SYSTEM_PATTERNS
@@ -33,10 +34,27 @@ NIM_API_KEY = os.environ.get("NIM_API_KEY", "")
 NIM_BASE_URL = os.environ.get("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
 NIM_MODEL = os.environ.get("NIM_MODEL", "meta/llama-3.3-70b-instruct")
 
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "")
+FIREBASE_CLIENT_EMAIL = os.environ.get("FIREBASE_CLIENT_EMAIL", "")
+FIREBASE_PRIVATE_KEY = os.environ.get("FIREBASE_PRIVATE_KEY", "")
+
 mongo_client = AsyncIOMotorClient(MONGO_URL)
 db = mongo_client[DB_NAME]
 
 nim_client = AsyncOpenAI(api_key=NIM_API_KEY, base_url=NIM_BASE_URL) if NIM_API_KEY else None
+
+if FIREBASE_PROJECT_ID and FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY:
+    cred = credentials.Certificate({
+        "type": "service_account",
+        "project_id": FIREBASE_PROJECT_ID,
+        "private_key": FIREBASE_PRIVATE_KEY,
+        "client_email": FIREBASE_CLIENT_EMAIL,
+        "token_uri": "https://oauth2.googleapis.com/token",
+    })
+    firebase_admin.initialize_app(cred)
+    logger.info("Firebase Admin SDK initialized")
+else:
+    logger.warning("Firebase Admin SDK not configured — missing env vars")
 
 app = FastAPI(title="Prompt Optimizer")
 api = APIRouter(prefix="/api")
@@ -168,29 +186,48 @@ async def get_current_user(request: Request) -> User:
 
 
 # ---------- Auth routes ----------
-@api.post("/auth/session")
-async def auth_session(request: Request, response: Response):
+@api.post("/auth/firebase")
+async def auth_firebase(request: Request, response: Response):
     body = await request.json()
-    session_id = body.get("session_id")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="session_id required")
+    id_token = body.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="id_token required")
 
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        r = await client.get(
-            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-            headers={"X-Session-ID": session_id},
-        )
-        if r.status_code != 200:
-            raise HTTPException(status_code=401, detail="Invalid session_id")
-        data = r.json()
+    if not firebase_admin._apps:
+        raise HTTPException(status_code=503, detail="Firebase not configured")
 
-    email = data["email"]
+    try:
+        decoded = firebase_auth.verify_id_token(id_token)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
+    except firebase_auth.InvalidIdTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
+    except firebase_auth.ExpiredIdTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Expired token: {e}")
+    except Exception as e:
+        logger.error(f"Firebase verify_id_token failed: {e}")
+        raise HTTPException(status_code=502, detail="Token verification failed")
+
+    uid = decoded.get("uid", "")
+    email = decoded.get("email", "") or ""
+    name_from_token = decoded.get("name", "")
+    picture_from_token = decoded.get("picture", "")
+
+    # Try to get full profile from Firebase Auth
+    try:
+        firebase_user = firebase_auth.get_user(uid)
+        name = firebase_user.display_name or name_from_token or ""
+        picture = firebase_user.photo_url or picture_from_token or ""
+    except Exception:
+        name = name_from_token or ""
+        picture = picture_from_token or ""
+
     existing = await db.users.find_one({"email": email}, {"_id": 0})
     if existing:
         user_id = existing["user_id"]
         await db.users.update_one(
             {"user_id": user_id},
-            {"$set": {"name": data.get("name", ""), "picture": data.get("picture", "")}},
+            {"$set": {"name": name, "picture": picture}},
         )
     else:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
@@ -198,13 +235,13 @@ async def auth_session(request: Request, response: Response):
             {
                 "user_id": user_id,
                 "email": email,
-                "name": data.get("name", ""),
-                "picture": data.get("picture", ""),
+                "name": name,
+                "picture": picture,
                 "created_at": datetime.now(timezone.utc).isoformat(),
             }
         )
 
-    session_token = data["session_token"]
+    session_token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=SESSION_DURATION_DAYS)
     await db.user_sessions.insert_one(
         {
@@ -227,8 +264,8 @@ async def auth_session(request: Request, response: Response):
     return {
         "user_id": user_id,
         "email": email,
-        "name": data.get("name", ""),
-        "picture": data.get("picture", ""),
+        "name": name,
+        "picture": picture,
     }
 
 

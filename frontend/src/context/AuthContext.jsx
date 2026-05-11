@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { getMe, logout as apiLogout } from "@/lib/api";
+import { signInWithPopup, signOut } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
+import { getMe, logout as apiLogout, postFirebaseSession } from "@/lib/api";
 
 const AuthContext = createContext(null);
 
@@ -12,7 +14,6 @@ export function AuthProvider({ children }) {
       const u = await getMe();
       setUser(u);
     } catch (err) {
-      // 401 is the expected "not logged in" path; other errors worth logging
       if (err?.response?.status !== 401) console.error("[checkAuth]", err);
       setUser(null);
     } finally {
@@ -21,25 +22,28 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // CRITICAL: If returning from OAuth callback, skip the /me check.
-    // AuthCallback will exchange the session_id and establish the session first.
-    if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
-      setLoading(false);
-      return;
-    }
     checkAuth();
   }, [checkAuth]);
 
-  const logout = async () => {
+  const loginWithGoogle = useCallback(async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    const idToken = await result.user.getIdToken();
+    const u = await postFirebaseSession(idToken);
+    setUser(u);
+    return u;
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
       await apiLogout();
     } finally {
+      try { await signOut(auth); } catch (e) { /* ignore */ }
       setUser(null);
     }
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout, refresh: checkAuth }}>
+    <AuthContext.Provider value={{ user, setUser, loading, logout, refresh: checkAuth, loginWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

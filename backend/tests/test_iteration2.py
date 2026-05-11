@@ -3,7 +3,7 @@ import json
 import os
 import requests
 
-BASE = os.environ.get("REACT_APP_BACKEND_URL", "https://pattern-refine.preview.emergentagent.com").rstrip("/")
+BASE = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8000").rstrip("/")
 
 
 # ---------- Usage object on /optimize-prompt ----------

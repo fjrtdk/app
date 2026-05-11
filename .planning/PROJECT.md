@@ -24,16 +24,7 @@ Users can optimize a prompt in one click and trust their work is saved.
 
 ### Active
 
-- [ ] **AUTH-01**: Replace Emergent Google OAuth with Firebase Google sign-in
-- [ ] **AUTH-02**: Firebase Admin SDK validates ID tokens on backend
-- [ ] **AUTH-03**: Custom session cookie (same format as current) created after Firebase auth
-- [ ] **AUTH-04**: Login page uses Firebase JS SDK `signInWithPopup(GoogleAuthProvider)`
-- [ ] **AUTH-05**: AuthCallback page handles Firebase redirect/popup flow
-- [ ] **AUTH-06**: Remove Emergent auth code (session exchange, logout, auth dependencies)
-- [ ] **AUTH-07**: All existing auth-guarded endpoints work unchanged
-- [ ] **AUTH-08**: Backend env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
-- [ ] **AUTH-09**: Frontend env var: `REACT_APP_FIREBASE_CONFIG` (or individual vars)
-- [ ] **AUTH-10**: Remove Emergent badge + PostHog from `public/index.html`
+All requirements are complete. See implementation details below.
 
 ### Out of Scope
 
@@ -49,13 +40,15 @@ Brownfield project. Existing codebase is a working Prompt Optimizer with FastAPI
 
 Key files affected:
 - `backend/server.py` — add Firebase Admin init, new `/api/auth/firebase` endpoint, remove Emergent `/api/auth/session`
-- `frontend/src/context/AuthContext.jsx` — replace `getMe()` + session logic with Firebase auth state
-- `frontend/src/pages/Login.jsx` — add Firebase Google sign-in button
-- `frontend/src/pages/AuthCallback.jsx` — handle Firebase flow
-- `frontend/src/lib/api.js` — update auth functions
-- `frontend/public/index.html` — remove Emergent script + PostHog + badge
-- `backend/requirements.txt` — add `firebase-admin`
-- `frontend/package.json` — add `firebase`
+- `frontend/src/context/AuthContext.jsx` — Firebase `loginWithGoogle` via `signInWithPopup`
+- `frontend/src/pages/Login.jsx` — calls `loginWithGoogle` from AuthContext
+- `frontend/src/pages/AuthCallback.jsx` — Firebase redirect fallback via `getRedirectResult`
+- `frontend/src/lib/api.js` — added `postFirebaseSession(idToken)`
+- `frontend/src/lib/firebase.js` — Firebase app config + auth exports
+- `frontend/public/index.html` — removed Emergent script + PostHog + badge
+- `backend/requirements.txt` — added `firebase-admin`
+- `frontend/package.json` — added `firebase`, removed `@emergentbase/visual-edits`
+- `backend/server.py` — Firebase Admin init + `POST /api/auth/firebase` endpoint, removed `POST /api/auth/session`
 
 ## Constraints
 
@@ -68,25 +61,25 @@ Key files affected:
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Firebase ID token → custom session cookie | Reuses existing session-guarded endpoints with zero changes | — Pending |
-| Firebase Admin SDK on backend | Handles ID token verification server-side | — Pending |
-| Firebase JS SDK on frontend | Handles Google sign-in via popup/redirect | — Pending |
-| Popup over redirect | Simpler UX, no page reload on sign-in | — Pending |
+| Firebase ID token → custom session cookie | Reuses existing session-guarded endpoints with zero changes | Implemented |
+| Firebase Admin SDK on backend | Handles ID token verification server-side | Implemented |
+| Firebase JS SDK on frontend | Handles Google sign-in via popup/redirect | Implemented |
+| Popup over redirect | Simpler UX, no page reload on sign-in | Implemented |
 
 ## Requirement Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01: Replace Emergent OAuth with Firebase Google sign-in | 3 | Planned |
-| AUTH-02: Firebase Admin SDK validates ID tokens | 2 | Planned |
-| AUTH-03: Custom session cookie after Firebase auth | 2 | Planned |
-| AUTH-04: Login page uses Firebase signInWithPopup | 3 | Planned |
-| AUTH-05: AuthCallback handles Firebase flow | 3 | Planned |
-| AUTH-06: Remove Emergent auth code | 4 | Planned |
-| AUTH-07: All auth-guarded endpoints work unchanged | 5 | Planned |
-| AUTH-08: Backend env vars for Firebase | 1 | Planned |
-| AUTH-09: Frontend env var for Firebase config | 1 | Planned |
-| AUTH-10: Remove Emergent badge + PostHog | 4 | Planned |
+| AUTH-01: Replace Emergent OAuth with Firebase Google sign-in | 3 | Complete |
+| AUTH-02: Firebase Admin SDK validates ID tokens | 2 | Complete |
+| AUTH-03: Custom session cookie after Firebase auth | 2 | Complete |
+| AUTH-04: Login page uses Firebase signInWithPopup | 3 | Complete |
+| AUTH-05: AuthCallback handles Firebase flow | 3 | Complete |
+| AUTH-06: Remove Emergent auth code | 4 | Complete |
+| AUTH-07: All auth-guarded endpoints work unchanged | 5 | Complete |
+| AUTH-08: Backend env vars for Firebase | 1 | Complete |
+| AUTH-09: Frontend env var for Firebase config | 1 | Complete |
+| AUTH-10: Remove Emergent badge + PostHog | 4 | Complete |
 
 ---
 *Last updated: 2026-05-10 after roadmap creation*

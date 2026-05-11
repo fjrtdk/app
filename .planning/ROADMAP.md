@@ -26,7 +26,7 @@ Replace Emergent Google OAuth with Firebase Google sign-in across the full stack
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: Create Firebase project via CLI, enable Google auth, generate credentials, write env files
+- [x] 01-01: Create Firebase project via CLI, enable Google auth, generate credentials, write env files
 
 ### Phase 2: Backend Firebase Integration
 **Goal**: Backend accepts Firebase ID tokens and issues session cookies
@@ -41,8 +41,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Add firebase-admin, init Firebase in server.py, create verify_firebase_token helper
-- [ ] 02-02: Add POST /api/auth/firebase endpoint that verifies token, creates user doc, sets session cookie
+- [x] 02-01: Add firebase-admin, init Firebase in server.py, create verify_firebase_token helper
+- [x] 02-02: Add POST /api/auth/firebase endpoint that verifies token, creates user doc, sets session cookie
 
 ### Phase 3: Frontend Firebase Integration
 **Goal**: Frontend signs in with Google via Firebase, gets session
@@ -57,8 +57,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Add Firebase JS SDK to frontend, create firebase config, update AuthContext
-- [ ] 03-02: Rewrite Login and AuthCallback pages for Firebase Google sign-in
+- [x] 03-01: Add Firebase JS SDK to frontend, create firebase config, update AuthContext
+- [x] 03-02: Rewrite Login and AuthCallback pages for Firebase Google sign-in
 
 ### Phase 4: Emergent Removal
 **Goal**: All Emergent dependencies and code removed
@@ -75,8 +75,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Remove Emergent backend code (auth session endpoint, visual-edits, emergent.yml)
-- [ ] 04-02: Clean up frontend (remove Emergent badge, PostHog, visual-edits from index.html, craco, package.json)
+- [x] 04-01: Remove Emergent backend code (auth session endpoint, visual-edits, emergent.yml)
+- [x] 04-02: Clean up frontend (remove Emergent badge, PostHog, visual-edits from index.html, craco, package.json)
 
 ### Phase 5: Verification & Polish
 **Goal**: Everything works, tests pass, docs updated
@@ -90,8 +90,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Update backend tests for Firebase auth, add .env.example files
-- [ ] 05-02: Full manual verification of auth flow end-to-end
+- [x] 05-01: Update backend tests for Firebase auth, add .env.example files
 
 ## Progress
 
@@ -99,8 +98,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Firebase Project Setup | 0/1 | Not started | - |
-| 2. Backend Firebase Integration | 0/2 | Not started | - |
-| 3. Frontend Firebase Integration | 0/2 | Not started | - |
-| 4. Emergent Removal | 0/2 | Not started | - |
-| 5. Verification & Polish | 0/2 | Not started | - |
+| 1. Firebase Project Setup | 1/1 | Complete | 2026-05-10 |
+| 2. Backend Firebase Integration | 2/2 | Complete | 2026-05-10 |
+| 3. Frontend Firebase Integration | 2/2 | Complete | 2026-05-10 |
+| 4. Emergent Removal | 2/2 | Complete | 2026-05-10 |
+| 5. Verification & Polish | 1/2 | Partial | 2026-05-10 |

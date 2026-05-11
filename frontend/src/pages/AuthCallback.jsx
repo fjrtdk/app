@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { postSession } from "@/lib/api";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { postFirebaseSession } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
-// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
@@ -13,21 +14,18 @@ export default function AuthCallback() {
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
-    const hash = window.location.hash || "";
-    const m = hash.match(/session_id=([^&]+)/);
-    if (!m) {
-      navigate("/login");
-      return;
-    }
-    const session_id = decodeURIComponent(m[1]);
-
     (async () => {
       try {
-        const u = await postSession(session_id);
-        setUser(u);
-        // Clean the hash from the URL
-        window.history.replaceState(null, "", "/app");
-        navigate("/app", { replace: true, state: { user: u } });
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const idToken = await result.user.getIdToken();
+          const u = await postFirebaseSession(idToken);
+          setUser(u);
+          window.history.replaceState(null, "", "/app");
+          navigate("/app", { replace: true });
+        } else {
+          navigate("/login", { replace: true });
+        }
       } catch (err) {
         console.error("[authCallback]", err);
         navigate("/login", { replace: true });

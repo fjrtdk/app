@@ -13,8 +13,8 @@ export async function getMe() {
   const r = await api.get("/auth/me");
   return r.data;
 }
-export async function postSession(session_id) {
-  const r = await api.post("/auth/session", { session_id });
+export async function postFirebaseSession(idToken) {
+  const r = await api.post("/auth/firebase", { id_token: idToken });
   return r.data;
 }
 export async function logout() {

@@ -1,7 +1,8 @@
 # Phase 1: Firebase Project Setup - Context
 
 **Gathered:** 2026-05-10
-**Status:** Ready for planning
+**Status:** Complete (executed 2026-05-10)
+**Actual Firebase Project ID:** `prompt-optimizer-fjrt` (during the session, this project ID was used. Note this for subsequent phases)
 
 <domain>
 ## Phase Boundary
@@ -14,7 +15,7 @@ Create a Firebase project with Google sign-in enabled, generate service account 
 ## Implementation Decisions
 
 ### Firebase Project
-- **D-01:** Project name: `prompt-optimizer`
+- **D-01:** Project name: `prompt-optimizer-fjrt` (was `prompt-optimizer` but taken globally)
 - **D-02:** GCP location: `us-central1` (default)
 - **D-03:** Use Firebase CLI (`firebase-tools`) for setup — `firebase init` + `firebase apps:create`
 

@@ -7,17 +7,20 @@ const LOGIN_BG =
   "https://images.unsplash.com/photo-1659957006181-7ba1d48864cc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwyfHxkYXJrJTIwYXJjaGl0ZWN0dXJlJTIwbWluaW1hbHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NzgyNTQxOTd8MA&ixlib=rb-4.1.0&q=85";
 
 export default function Login() {
-  const { user, loading } = useAuth();
+  const { user, loading, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && user) navigate("/app", { replace: true });
   }, [loading, user, navigate]);
 
-  const handleGoogle = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + "/app";
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleGoogle = async () => {
+    try {
+      await loginWithGoogle();
+      navigate("/app", { replace: true });
+    } catch (err) {
+      console.error("[login]", err?.code || err);
+    }
   };
 
   return (
