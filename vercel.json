@@ -5,10 +5,6 @@
       ".planning": false
     }
   },
-  "buildCommand": "npx craco build",
-  "outputDirectory": "build",
-  "framework": "create-react-app",
-  "rootDirectory": "frontend",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
