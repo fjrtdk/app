@@ -43,6 +43,9 @@ db = mongo_client[DB_NAME]
 
 nim_client = AsyncOpenAI(api_key=NIM_API_KEY, base_url=NIM_BASE_URL) if NIM_API_KEY else None
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
 if FIREBASE_PROJECT_ID and FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY:
     cred = credentials.Certificate({
         "type": "service_account",
@@ -58,9 +61,6 @@ else:
 
 app = FastAPI(title="Prompt Optimizer")
 api = APIRouter(prefix="/api")
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
 
 
 # ---------- Models ----------
