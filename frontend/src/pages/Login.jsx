@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { wakeBackend } from "@/lib/api";
 
 const LOGIN_BG =
   "https://images.unsplash.com/photo-1659957006181-7ba1d48864cc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwyfHxkYXJrJTIwYXJjaGl0ZWN0dXJlJTIwbWluaW1hbHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NzgyNTQxOTd8MA&ixlib=rb-4.1.0&q=85";
@@ -9,6 +10,21 @@ const LOGIN_BG =
 export default function Login() {
   const { user, loading, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [waking, setWaking] = useState(false);
+  const [woken, setWoken] = useState(false);
+
+  const handleWake = async () => {
+    setWaking(true);
+    try {
+      await wakeBackend();
+      setWoken(true);
+    } catch (err) {
+      // still show success — backend might be warming up
+      setWoken(true);
+    } finally {
+      setWaking(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && user) navigate("/app", { replace: true });
@@ -99,6 +115,22 @@ export default function Login() {
             </svg>
             Continue with Google
           </Button>
+
+          <button
+            data-testid="wake-btn"
+            onClick={handleWake}
+            disabled={waking || woken}
+            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+          >
+            {waking ? (
+              <span className="inline-block w-3 h-3 border border-zinc-500 border-t-transparent rounded-full animate-spin" />
+            ) : woken ? (
+              <span className="text-[#C4F159]">●</span>
+            ) : (
+              <span className="text-zinc-600">○</span>
+            )}
+            {woken ? "Backend awake" : waking ? "Waking backend..." : "Wake backend"}
+          </button>
 
           <div className="space-y-3 pt-4 border-t border-zinc-900">
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">

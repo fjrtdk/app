@@ -8,6 +8,12 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// ---------- health / wake ----------
+export async function wakeBackend() {
+  const r = await api.get("/health");
+  return r.data;
+}
+
 // ---------- auth ----------
 export async function getMe() {
   const r = await api.get("/auth/me");
