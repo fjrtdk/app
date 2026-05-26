@@ -14,8 +14,10 @@
   "buildCommand": "yarn build",
   "outputDirectory": "build",
   "installCommand": "yarn install",
-  "rootDirectory": "frontend",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
