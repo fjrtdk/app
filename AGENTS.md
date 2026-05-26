@@ -359,3 +359,39 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+<!-- GSD:android-start -->
+## Android (Capacitor)
+
+This app has Capacitor-based Android support. The Android project lives in `frontend/android/`.
+
+### Prerequisites
+- Node.js 18+, Yarn 1.x, Android Studio, Android SDK (API 24+)
+- Firebase project with Android app configured (package: `com.promptoptimizer.app`)
+
+### Commands
+```
+cd frontend/
+yarn build                 # Build web app
+npx cap sync android       # Sync web build + plugins to Android project
+npx cap open android       # Open Android Studio
+npx cap run android        # Run on connected device/emulator
+
+# Quick full build
+bash scripts/build-android.sh
+```
+
+### Key Files
+- `frontend/capacitor.config.ts` — Capacitor configuration (appId, webDir, plugins)
+- `frontend/android/app/google-services.json` — Firebase config (replace with yours)
+- `frontend/src/lib/mobile-auth.js` — Native Google Sign-In for Android
+- `frontend/src/context/AuthContext.jsx` — Auth with dual web/mobile flow
+
+### Auth Flow
+- Web: `signInWithPopup` (existing)
+- Android: Native Google Sign-In via `@capacitor-firebase/authentication`
+- Both send ID token to `POST /api/auth/firebase`
+
+### PWA
+The app also has PWA support with manifest, icons, and service worker in `frontend/public/`.
+<!-- GSD:android-end -->

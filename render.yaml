@@ -16,7 +16,7 @@ services:
       - key: NIM_MODEL
         value: meta/llama-3.3-70b-instruct
       - key: CORS_ORIGINS
-        value: https://prompt-optimizer-seven-phi.vercel.app
+        value: https://prompt-optimizer-seven-phi.vercel.app,https://prompt-optimizer-fjrt.web.app
       - key: FIREBASE_PROJECT_ID
         value: prompt-optimizer-fjrt
       - key: FIREBASE_CLIENT_EMAIL

@@ -84,3 +84,11 @@ android-sdk/
 # Environment files
 backend/.env
 frontend/.env.local
+
+# Capacitor
+android/
+capacitor.config.json
+
+# Environment secrets
+frontend/.env
+.firebase/

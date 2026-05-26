@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
+import { signInWithGoogleMobile, isCapacitor } from "@/lib/mobile-auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { getMe, logout as apiLogout, postFirebaseSession } from "@/lib/api";
 
@@ -26,8 +27,19 @@ export function AuthProvider({ children }) {
   }, [checkAuth]);
 
   const loginWithGoogle = useCallback(async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    const idToken = await result.user.getIdToken();
+    let idToken = null;
+
+    // Try native mobile auth first (Capacitor WebView)
+    if (isCapacitor()) {
+      idToken = await signInWithGoogleMobile();
+    }
+
+    // Fall back to web popup auth
+    if (!idToken) {
+      const result = await signInWithPopup(auth, googleProvider);
+      idToken = await result.user.getIdToken();
+    }
+
     const u = await postFirebaseSession(idToken);
     setUser(u);
     return u;

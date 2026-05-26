@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="64" fill="#050505"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="192" fill="#C4F159">PO</text>
+  <text x="50%" y="78%" dominant-baseline="middle" text-anchor="middle" font-family="'Courier New',monospace" font-weight="400" font-size="36" fill="#6B7280">prompt</text>
+</svg>
