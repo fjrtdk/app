@@ -2,9 +2,19 @@
   "git": {
     "deploymentEnabled": {
       "backend": false,
-      ".planning": false
+      ".planning": false,
+      "android": false,
+      ".github": false,
+      "memory": false,
+      "scripts": false,
+      "tests": false
     }
   },
+  "framework": "create-react-app",
+  "buildCommand": "yarn build",
+  "outputDirectory": "build",
+  "installCommand": "yarn install",
+  "rootDirectory": "frontend",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
