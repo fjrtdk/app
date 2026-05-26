@@ -262,6 +262,7 @@ async def auth_firebase(request: Request, response: Response):
         max_age=SESSION_DURATION_DAYS * 24 * 3600,
     )
     return {
+        "session_token": session_token,
         "user_id": user_id,
         "email": email,
         "name": name,
@@ -280,7 +281,8 @@ async def auth_logout(request: Request, response: Response):
     if token:
         await db.user_sessions.delete_one({"session_token": token})
     response.delete_cookie(SESSION_COOKIE_NAME, path="/")
-    return {"status": "logged_out"}
+    return {
+        "session_token": session_token,"status": "logged_out"}
 
 
 # ---------- Patterns ----------
@@ -588,7 +590,8 @@ async def delete_prompt(prompt_id: str, user: User = Depends(get_current_user)):
     res = await db.prompts.delete_one({"prompt_id": prompt_id, "user_id": user.user_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
-    return {"status": "deleted"}
+    return {
+        "session_token": session_token,"status": "deleted"}
 
 
 @api.post("/prompts/{prompt_id}/fork", response_model=PromptOut)
@@ -691,7 +694,8 @@ async def unshare_prompt(prompt_id: str, user: User = Depends(get_current_user))
     )
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
-    return {"status": "unshared"}
+    return {
+        "session_token": session_token,"status": "unshared"}
 
 
 class SharedPromptOut(BaseModel):
@@ -863,12 +867,14 @@ async def optimize_prompt_stream(req: OptimizeRequest, user: User = Depends(get_
 # ---------- Health ----------
 @api.get("/health")
 async def health():
-    return {"status": "ok", "model": NIM_MODEL, "nim_configured": bool(NIM_API_KEY)}
+    return {
+        "session_token": session_token,"status": "ok", "model": NIM_MODEL, "nim_configured": bool(NIM_API_KEY)}
 
 
 @api.get("/")
 async def root():
-    return {"app": "Prompt Optimizer", "status": "ok"}
+    return {
+        "session_token": session_token,"app": "Prompt Optimizer", "status": "ok"}
 
 
 # ---------- Startup ----------

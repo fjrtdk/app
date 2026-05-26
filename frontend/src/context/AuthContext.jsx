@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { signInWithGoogleMobile, isCapacitor } from "@/lib/mobile-auth";
+import { setSessionToken as setApiToken } from "@/lib/api";
 import { auth, googleProvider } from "@/lib/firebase";
 import { getMe, logout as apiLogout, postFirebaseSession } from "@/lib/api";
 
@@ -40,9 +41,13 @@ export function AuthProvider({ children }) {
       idToken = await result.user.getIdToken();
     }
 
-    const u = await postFirebaseSession(idToken);
-    setUser(u);
-    return u;
+    const resp = await postFirebaseSession(idToken);
+    // Store session token for cross-origin auth
+    if (resp.session_token) {
+      setApiToken(resp.session_token);
+    }
+    setUser(resp);
+    return resp;
   }, []);
 
   const logout = useCallback(async () => {
@@ -51,6 +56,7 @@ export function AuthProvider({ children }) {
     } finally {
       try { await signOut(auth); } catch (e) { /* ignore */ }
       setUser(null);
+      setApiToken(null);
     }
   }, []);
 

@@ -8,6 +8,30 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// ---------- token-based auth (for cross-origin) ----------
+const TOKEN_KEY = "prompt_session_token";
+
+export function setSessionToken(token) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+export function getSessionToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+// Add auth token to every request if available
+api.interceptors.request.use((config) => {
+  const token = getSessionToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // ---------- health / wake ----------
 export async function wakeBackend() {
   const r = await api.get("/health");
